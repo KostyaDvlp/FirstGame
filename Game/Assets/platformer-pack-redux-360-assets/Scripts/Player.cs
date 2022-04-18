@@ -10,11 +10,15 @@ public class Player : MonoBehaviour
     public Transform groundCheck;
     bool isGrounded;
     Animator anim;
+    int playerHealth = 5, currentHealth;
+    bool isHit = false;
+    public Main main;
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
+        currentHealth = playerHealth;
     }
 
     // Update is called once per frame
@@ -30,7 +34,7 @@ public class Player : MonoBehaviour
         {
             rb.AddForce(transform.up * jumpHeight, ForceMode2D.Impulse);
         }
-        if(Input.GetAxis("Horizontal") == 0 && (isGrounded))
+        if (Input.GetAxis("Horizontal") == 0 && (isGrounded))
         {
             anim.SetInteger("State", 1);
         }
@@ -63,5 +67,48 @@ public class Player : MonoBehaviour
         {
             anim.SetInteger("State", 3);
         }
+    }
+
+    public void RecountHealth(int deltaHealth)
+    {
+        currentHealth = currentHealth + deltaHealth;
+        if (deltaHealth < 0)
+        {
+            StopCoroutine(OnHit());
+            isHit = true;
+            StartCoroutine(OnHit());
+        }
+        if (currentHealth <= 0)
+        {
+            GetComponent<CapsuleCollider2D>().enabled = false;
+            Invoke("Lose", 1.5f);
+        }
+    }
+
+    IEnumerator OnHit()
+    {
+        if (isHit)
+        {
+            GetComponent<SpriteRenderer>().color = new Color(1f, GetComponent<SpriteRenderer>().color.g - 0.05f, GetComponent<SpriteRenderer>().color.b - 0.05f);
+        }
+        else
+        {
+            GetComponent<SpriteRenderer>().color = new Color(1f, GetComponent<SpriteRenderer>().color.g + 0.05f, GetComponent<SpriteRenderer>().color.b + 0.05f);
+        }
+        if(GetComponent<SpriteRenderer>().color.g == 1)
+        {
+            StopCoroutine(OnHit());
+        }
+        if (GetComponent<SpriteRenderer>().color.g <= 0)
+        {
+            isHit = false;
+        }
+        yield return new WaitForSeconds(0.01f);
+        StartCoroutine(OnHit());
+    }
+
+    void Lose()
+    {
+        main.GetComponent<Main>().Lose();
     }
 }
